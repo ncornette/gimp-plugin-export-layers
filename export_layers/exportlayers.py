@@ -39,6 +39,7 @@ str = unicode
 
 import os
 from collections import defaultdict
+import json
 
 import gimp
 import gimpenums
@@ -193,6 +194,7 @@ class LayerExporter(object):
     
     self.should_stop = False
     self._exported_layers = []
+    self.layout = {'image':None, 'layers':[]}
   
   @property
   def exported_layers(self):
@@ -318,6 +320,8 @@ class LayerExporter(object):
     
     libfiles.make_dirs(self._output_directory)
     
+    self.layout['image'] = {'name':self._image_copy.name, 'width':self._image_copy.width, 'height':self._image_copy.height}
+    
     for layer_elem in self._layer_data:
       if self.should_stop:
         raise ExportLayersCancelError("export stopped by user")
@@ -339,6 +343,8 @@ class LayerExporter(object):
                                          place_before_file_extension=True)
           self._export_layer(layer_elem, self._image_copy, layer_copy)
         
+        self.layout["layers"].append({'name':layer.name, 'offsets':layer.offsets, 'width':layer.width, 'height':layer.height})
+        
         self.progress_updater.update_tasks(1)
         if not self._is_current_layer_skipped:
           # Append the original layer, not the copy, since the copy is going to
@@ -352,6 +358,9 @@ class LayerExporter(object):
                                        place_before_file_extension=False)
         empty_directory = layer_elem.get_filepath(self._output_directory, self._include_item_path)
         libfiles.make_dirs(empty_directory)
+
+    with open(os.path.join(self._output_directory,'layout.json'), 'w') as f:
+        f.write(json.dumps(self.layout, indent=2))
   
   def _setup(self):
     # Save context just in case. No need for undo groups or undo freeze here.

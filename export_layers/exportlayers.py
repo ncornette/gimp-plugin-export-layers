@@ -194,7 +194,7 @@ class LayerExporter(object):
     
     self.should_stop = False
     self._exported_layers = []
-    self.layout = {'image':None, 'layers':[]}
+    self.layout = {'image':None, 'layers':None}
   
   @property
   def exported_layers(self):
@@ -321,6 +321,7 @@ class LayerExporter(object):
     libfiles.make_dirs(self._output_directory)
     
     self.layout['image'] = {'name':self._image_copy.name, 'width':self._image_copy.width, 'height':self._image_copy.height}
+    self.layout['layers'] = {}
     
     for layer_elem in self._layer_data:
       if self.should_stop:
@@ -343,7 +344,7 @@ class LayerExporter(object):
                                          place_before_file_extension=True)
           self._export_layer(layer_elem, self._image_copy, layer_copy)
         
-        self.layout["layers"].append({'name':layer.name, 'offsets':layer.offsets, 'width':layer.width, 'height':layer.height})
+        self.layout["layers"].setdefault(layer.name, {'offsets':layer.offsets, 'width':layer.width, 'height':layer.height})
         
         self.progress_updater.update_tasks(1)
         if not self._is_current_layer_skipped:
